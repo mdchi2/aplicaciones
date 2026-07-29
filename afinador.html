@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Afinador de Guitarra Profesional</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-gradient: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 60%, #090d16 100%);
+      --card-bg: rgba(30, 41, 59, 0.45);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-blur: 16px;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      
+      /* Dynamic accent variables overridden by JS theme classes */
+      --accent-color: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      
+      --color-tuned: #10b981;
+      --color-tuned-glow: rgba(16, 185, 129, 0.5);
+      --color-flat: #f59e0b;
+      --color-flat-glow: rgba(245, 158, 11, 0.4);
+      --color-flat-severe: #ef4444;
+      --color-flat-severe-glow: rgba(239, 68, 68, 0.5);
+      --color-sharp: #eab308;
+      --color-sharp-glow: rgba(234, 179, 8, 0.4);
+      --color-sharp-severe: #ef4444;
+      --color-sharp-severe-glow: rgba(239, 68, 68, 0.5);
+    }
+
+    /* Theme Overrides applied via JS */
+    .theme-idle {
+      --accent-color: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+    }
+    .theme-tuned {
+      --accent-color: var(--color-tuned);
+      --accent-glow: var(--color-tuned-glow);
+    }
+    .theme-flat {
+      --accent-color: var(--color-flat);
+      --accent-glow: var(--color-flat-glow);
+    }
+    .theme-flat-severe {
+      --accent-color: var(--color-flat-severe);
+      --accent-glow: var(--color-flat-severe-glow);
+    }
+    .theme-sharp {
+      --accent-color: var(--color-sharp);
+      --accent-glow: var(--color-sharp-glow);
+    }
+    .theme-sharp-severe {
+      --accent-color: var(--color-sharp-severe);
+      --accent-glow: var(--color-sharp-severe-glow);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-dark);
+      background-image: var(--bg-gradient);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* App Container */
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--card-blur));
+      -webkit-backdrop-filter: blur(var(--card-blur));
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 
+                  0 0 50px rgba(30, 27, 75, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* Glow effect on the card border matching the tuner state */
+    .app-container.glowing {
+      border-color: rgba(var(--accent-color), 0.3);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 
+                  0 0 30px var(--accent-glow);
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Segmented Control for Modes */
+    .mode-selector {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 9999px;
+      padding: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .mode-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, var(--accent-color) 0%, rgba(var(--accent-color), 0.8) 100%);
+      background-color: var(--accent-color);
+      color: #0f172a;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    /* Tuner Display Panel */
+    .display-panel {
+      position: relative;
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 20px;
+      padding: 20px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+    }
+
+    /* SVG Gauge */
+    .gauge-container {
+      width: 100%;
+      max-width: 280px;
+      position: relative;
+    }
+
+    .tuner-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    #needle-group {
+      transform-origin: 150px 140px;
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #needle {
+      stroke: var(--accent-color);
+      filter: drop-shadow(0 0 3px var(--accent-glow));
+      transition: stroke 0.3s ease, filter 0.3s ease;
+    }
+
+    /* Central Big Note */
+    .note-display {
+      position: absolute;
+      bottom: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .note-bubble {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+
+    .note-letter {
+      font-size: 4.5rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--accent-color);
+      text-shadow: 0 0 25px var(--accent-glow);
+      transition: color 0.3s ease, text-shadow 0.3s ease;
+    }
+
+    .note-details {
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-top: -4px;
+      text-align: center;
+    }
+
+    .frequency-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+      margin-top: 4px;
+    }
+
+    .cents-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      margin-top: 4px;
+      transition: color 0.3s ease;
+    }
+
+    /* Microphone Permission Overlay */
+    .mic-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .mic-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .mic-icon-container {
+      width: 70px;
+      height: 70px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8;
+      margin-bottom: 16px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+    }
+
+    .mic-overlay h3 {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+    }
+
+    .mic-overlay p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      max-width: 260px;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Waveform visualizer */
+    .visualizer-container {
+      width: 100%;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    #wave-canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+    }
+
+    /* Guitar Fretboard & Strings */
+    .fretboard-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .fretboard-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .fretboard {
+      background: linear-gradient(90deg, #1e1b4b 0%, #111827 100%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 16px 12px;
+      position: relative;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Fret lines visually vertically dividing the fretboard */
+    .fretboard::before,
+    .fretboard::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: rgba(255,255,255,0.08);
+    }
+    .fretboard::before { left: 33%; }
+    .fretboard::after { left: 66%; }
+
+    .string-row {
+      display: flex;
+      align-items: center;
+      position: relative;
+      height: 38px;
+    }
+
+    /* String Buttons */
+    .string-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid #334155;
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .string-btn .note-char {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .string-btn .string-idx {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* Interactive guitar strings lines extending to the right */
+    .string-line-container {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding-left: 12px;
+      cursor: pointer;
+    }
+
+    .string-line {
+      width: 100%;
+      border-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      transition: background-color 0.3s ease;
+      position: relative;
+    }
+
+    /* String Gauges and colors: 6,5,4 wound bronze, 3,2,1 steel */
+    .s6 { height: 5px; background: #b45309; } /* Thickest E */
+    .s5 { height: 4px; background: #d97706; } /* A */
+    .s4 { height: 3.2px; background: #f59e0b; } /* D */
+    .s3 { height: 2.2px; background: #94a3b8; } /* G */
+    .s2 { height: 1.5px; background: #cbd5e1; } /* B */
+    .s1 { height: 0.9px; background: #f1f5f9; } /* Thinnest e */
+
+    /* Active / Selected / Tuned String States */
+    .string-row.active .string-btn {
+      background: var(--accent-color);
+      border-color: var(--accent-color);
+      color: #0f172a;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .string-row.active .string-line {
+      background: var(--accent-color) !important;
+      filter: drop-shadow(0 0 3px var(--accent-glow));
+    }
+
+    /* Visual String Vibration Animation */
+    @keyframes vibrate {
+      0% { transform: translateY(0); }
+      15% { transform: translateY(-1.5px); }
+      30% { transform: translateY(1.2px); }
+      45% { transform: translateY(-1px); }
+      60% { transform: translateY(0.8px); }
+      75% { transform: translateY(-0.5px); }
+      90% { transform: translateY(0.3px); }
+      100% { transform: translateY(0); }
+    }
+
+    .string-line.vibrating {
+      animation: vibrate 0.08s linear infinite;
+    }
+
+    /* Instructions & Help Card */
+    .info-card {
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .info-card h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .info-card p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+        justify-content: flex-start;
+      }
+
+      .app-container {
+        border-radius: 20px;
+        padding: 16px;
+        gap: 16px;
+        box-shadow: none;
+        border: none;
+        background: transparent;
+      }
+
+      .display-panel {
+        min-height: 250px;
+        padding: 16px 12px;
+      }
+
+      .note-letter {
+        font-size: 4rem;
+      }
+
+      .fretboard {
+        padding: 12px 8px;
+        gap: 10px;
+      }
+
+      .string-row {
+        height: 34px;
+      }
+
+      .string-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      .string-btn .note-char {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container" id="tuner-app">
+    <!-- Header -->
+    <header>
+      <h1>Afinador de Guitarra</h1>
+      <div class="subtitle" id="subtitle-text">Modo Cromático Automático</div>
+    </header>
+
+    <!-- Mode Selector -->
+    <div class="mode-selector">
+      <button id="btn-auto" class="mode-btn active">Auto (Micrófono)</button>
+      <button id="btn-manual" class="mode-btn">Manual (Escuchar)</button>
+    </div>
+
+    <!-- Main Tuner Panel -->
+    <div class="display-panel" id="display-panel">
+      <!-- Microphone Access Overlay -->
+      <div id="mic-overlay" class="mic-overlay">
+        <div class="mic-icon-container">
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+        </div>
+        <h3>Permiso de Micrófono</h3>
+        <p>Este afinador necesita acceso a tu micrófono para capturar las cuerdas en tiempo real.</p>
+        <button id="btn-enable-mic" class="action-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:4px;">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Activar Micrófono
+        </button>
+      </div>
+
+      <!-- Radial Tuner Scale (SVG) -->
+      <div class="gauge-container">
+        <svg viewBox="0 0 300 160" class="tuner-svg">
+          <defs>
+            <!-- Needle Glow Effect -->
+            <filter id="needle-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <!-- Tuned Glow Effect -->
+            <filter id="tuned-glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <!-- Outer curved background track -->
+          <path d="M 40 140 A 110 110 0 0 1 260 140" fill="none" stroke="#1e293b" stroke-width="8" stroke-linecap="round"/>
+          
+          <!-- In Tune Green Target Arc (Center) -->
+          <path d="M 139 31.5 A 110 110 0 0 1 161 31.5" fill="none" stroke="var(--color-tuned)" stroke-width="12" stroke-linecap="round" style="opacity: 0.8; filter: drop-shadow(0 0 4px var(--color-tuned-glow));"/>
+
+          <!-- Tick Marks and Labels -->
+          <g transform="translate(150, 140)">
+            <!-- Flat indicator text -->
+            <text x="-120" y="-5" fill="var(--text-secondary)" font-size="10" font-weight="bold" text-anchor="middle">GRAVE</text>
+            <!-- Sharp indicator text -->
+            <text x="120" y="-5" fill="var(--text-secondary)" font-size="10" font-weight="bold" text-anchor="middle">AGUDO</text>
+
+            <!-- -50 Cents (Flat) -->
+            <line x1="0" y1="-110" x2="0" y2="-120" stroke="#475569" stroke-width="2" transform="rotate(-60)" />
+            <text x="0" y="-126" fill="#64748b" font-size="9" text-anchor="middle" transform="rotate(-60) rotate(60, 0, -126)">-50</text>
+
+            <!-- Intermediate ticks -->
+            <line x1="0" y1="-110" x2="0" y2="-117" stroke="#334155" stroke-width="1.5" transform="rotate(-48)" />
+            <line x1="0" y1="-110" x2="0" y2="-117" stroke="#334155" stroke-width="1.5" transform="rotate(-36)" />
+            
+            <!-- -20 Cents -->
+            <line x1="0" y1="-110" x2="0" y2="-120" stroke="#475569" stroke-width="2" transform="rotate(-24)" />
+            <text x="0" y="-126" fill="#64748b" font-size="9" text-anchor="middle" transform="rotate(-24) rotate(24, 0, -126)">-20</text>
+
+            <line x1="0" y1="-110" x2="0" y2="-117" stroke="#334155" stroke-width="1.5" transform="rotate(-12)" />
+
+            <!-- 0 Cents (In Tune) -->
+            <line x1="0" y1="-110" x2="0" y2="-124" stroke="var(--color-tuned)" stroke-width="3" transform="rotate(0)" />
+            <text x="0" y="-132" fill="var(--color-tuned)" font-size="11" font-weight="800" text-anchor="middle">0</text>
+
+            <line x1="0" y1="-110" x2="0" y2="-117" stroke="#334155" stroke-width="1.5" transform="rotate(12)" />
+
+            <!-- +20 Cents -->
+            <line x1="0" y1="-110" x2="0" y2="-120" stroke="#475569" stroke-width="2" transform="rotate(24)" />
+            <text x="0" y="-126" fill="#64748b" font-size="9" text-anchor="middle" transform="rotate(24) rotate(-24, 0, -126)">+20</text>
+
+            <line x1="0" y1="-110" x2="0" y2="-117" stroke="#334155" stroke-width="1.5" transform="rotate(36)" />
+            <line x1="0" y1="-110" x2="0" y2="-117" stroke="#334155" stroke-width="1.5" transform="rotate(48)" />
+
+            <!-- +50 Cents (Sharp) -->
+            <line x1="0" y1="-110" x2="0" y2="-120" stroke="#475569" stroke-width="2" transform="rotate(60)" />
+            <text x="0" y="-126" fill="#64748b" font-size="9" text-anchor="middle" transform="rotate(60) rotate(-60, 0, -126)">+50</text>
+          </g>
+
+          <!-- Needle Group -->
+          <g id="needle-group">
+            <line x1="150" y1="140" x2="150" y2="28" stroke="var(--accent-color)" stroke-width="3.5" stroke-linecap="round" id="needle" />
+            <!-- Inner accent needle line for design detail -->
+            <circle cx="150" cy="140" r="14" fill="#0f172a" stroke="var(--accent-color)" stroke-width="2" />
+            <circle cx="150" cy="140" r="5" fill="var(--accent-color)" />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Numerical/Textual Tuning Display -->
+      <div class="note-display">
+        <div class="note-bubble">
+          <span class="note-letter" id="note-letter">-</span>
+        </div>
+        <div class="note-details" id="note-details">Toca una cuerda</div>
+        <div class="cents-text" id="cents-text">--</div>
+        <div class="frequency-text" id="frequency-text">0.0 Hz</div>
+      </div>
+    </div>
+
+    <!-- Live Wave Visualizer -->
+    <div class="visualizer-container">
+      <canvas id="wave-canvas"></canvas>
+    </div>
+
+    <!-- Interactive Fretboard and Strings -->
+    <div class="fretboard-container">
+      <div class="fretboard-title" id="fretboard-title-text">Cuerdas (Toca para escuchar de oído)</div>
+      
+      <div class="fretboard" id="fretboard">
+        <!-- String 1: e (High E, 1ª) -->
+        <div class="string-row" data-freq="329.63" data-note="E4" data-string="1">
+          <button class="string-btn" aria-label="Cuerda 1 Mi (Agudo)">
+            <span class="note-char">e</span>
+            <span class="string-idx">1ª</span>
+          </button>
+          <div class="string-line-container">
+            <div class="string-line s1"></div>
+          </div>
+        </div>
+
+        <!-- String 2: B (2ª) -->
+        <div class="string-row" data-freq="246.94" data-note="B3" data-string="2">
+          <button class="string-btn" aria-label="Cuerda 2 Si">
+            <span class="note-char">B</span>
+            <span class="string-idx">2ª</span>
+          </button>
+          <div class="string-line-container">
+            <div class="string-line s2"></div>
+          </div>
+        </div>
+
+        <!-- String 3: G (3ª) -->
+        <div class="string-row" data-freq="196.00" data-note="G3" data-string="3">
+          <button class="string-btn" aria-label="Cuerda 3 Sol">
+            <span class="note-char">G</span>
+            <span class="string-idx">3ª</span>
+          </button>
+          <div class="string-line-container">
+            <div class="string-line s3"></div>
+          </div>
+        </div>
+
+        <!-- String 4: D (4ª) -->
+        <div class="string-row" data-freq="146.83" data-note="D3" data-string="4">
+          <button class="string-btn" aria-label="Cuerda 4 Re">
+            <span class="note-char">D</span>
+            <span class="string-idx">4ª</span>
+          </button>
+          <div class="string-line-container">
+            <div class="string-line s4"></div>
+          </div>
+        </div>
+
+        <!-- String 5: A (5ª) -->
+        <div class="string-row" data-freq="110.00" data-note="A2" data-string="5">
+          <button class="string-btn" aria-label="Cuerda 5 La">
+            <span class="note-char">A</span>
+            <span class="string-idx">5ª</span>
+          </button>
+          <div class="string-line-container">
+            <div class="string-line s5"></div>
+          </div>
+        </div>
+
+        <!-- String 6: E (Low E, 6ª) -->
+        <div class="string-row" data-freq="82.41" data-note="E2" data-string="6">
+          <button class="string-btn" aria-label="Cuerda 6 Mi (Grave)">
+            <span class="note-char">E</span>
+            <span class="string-idx">6ª</span>
+          </button>
+          <div class="string-line-container">
+            <div class="string-line s6"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Info Cards -->
+    <div class="info-card">
+      <h4 id="info-header">Cómo usar el afinador</h4>
+      <p id="info-description">
+        <strong>Modo Auto:</strong> Activa tu micrófono y toca una cuerda de la guitarra. El afinador detectará qué nota estás tocando y la aguja te indicará si está muy grave (izquierda) o muy aguda (derecha). Busca centrar la aguja en 0 (verde).<br><br>
+        <strong>Modo Manual:</strong> Pulsa los botones de las cuerdas (1ª a 6ª) para escuchar su sonido de referencia continuo y afinar de oído.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Musical note definitions (Chromatic scale)
+    const noteStringsEnglish = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    const noteStringsSpanish = ["Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+
+    // Mapping standard guitar frequencies to their MIDI note numbers
+    const guitarStringsNotes = {
+      40: 6, // E2 (6ª)
+      45: 5, // A2 (5ª)
+      50: 4, // D3 (4ª)
+      55: 3, // G3 (3ª)
+      59: 2, // B3 (2ª)
+      64: 1  // E4 (1ª)
+    };
+
+    // Application state
+    let isAutoMode = true;
+    let micStream = null;
+    let audioContext = null;
+    let analyserNode = null;
+    let biquadFilterNode = null;
+    let animationFrameId = null;
+    
+    // Autocorrelation variables
+    const fftSize = 2048;
+    const timeBuffer = new Float32Array(fftSize);
+
+    // Audio output variables (Manual mode)
+    let activeOscillator = null;
+    let activeGainNode = null;
+    let currentPlayingString = null; // Stores row element of the playing string
+
+    // Smoothing filters (low pass filter to stabilize needle and frequency values)
+    let smoothedFrequency = 0;
+    let smoothedCents = 0;
+    let lastNoteNumber = -1;
+    let silenceTimeout = null;
+    let isListening = false;
+
+    // DOM Elements
+    const appContainer = document.getElementById('tuner-app');
+    const btnAuto = document.getElementById('btn-auto');
+    const btnManual = document.getElementById('btn-manual');
+    const micOverlay = document.getElementById('mic-overlay');
+    const btnEnableMic = document.getElementById('btn-enable-mic');
+    
+    const needleGroup = document.getElementById('needle-group');
+    const noteLetter = document.getElementById('note-letter');
+    const noteDetails = document.getElementById('note-details');
+    const centsText = document.getElementById('cents-text');
+    const frequencyText = document.getElementById('frequency-text');
+    const subtitleText = document.getElementById('subtitle-text');
+    const fretboardTitleText = document.getElementById('fretboard-title-text');
+
+    const waveCanvas = document.getElementById('wave-canvas');
+    const canvasContext = waveCanvas.getContext('2d');
+    const stringRows = document.querySelectorAll('.string-row');
+
+    // Initialize Canvas Dimensions
+    function resizeCanvas() {
+      waveCanvas.width = waveCanvas.clientWidth * (window.devicePixelRatio || 1);
+      waveCanvas.height = waveCanvas.clientHeight * (window.devicePixelRatio || 1);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Setup mode switching
+    btnAuto.addEventListener('click', () => setMode(true));
+    btnManual.addEventListener('click', () => setMode(false));
+    btnEnableMic.addEventListener('click', requestMicrophoneAccess);
+
+    // Click handler for guitar strings
+    stringRows.forEach(row => {
+      // Allow trigger by clicking string button or clicking the string line container
+      const triggerElements = [
+        row.querySelector('.string-btn'),
+        row.querySelector('.string-line-container')
+      ];
+
+      triggerElements.forEach(element => {
+        element.addEventListener('click', () => {
+          const stringIndex = parseInt(row.getAttribute('data-string'));
+          const freq = parseFloat(row.getAttribute('data-freq'));
+          const noteName = row.getAttribute('data-note');
+          
+          if (isAutoMode) {
+            // Auto Mode: Tap acts as a visual prompt/helper to highlight string target
+            highlightString(stringIndex);
+            noteDetails.innerText = `Cuerda ${stringIndex} seleccionada`;
+            noteLetter.innerText = row.querySelector('.note-char').innerText.toUpperCase();
+            frequencyText.innerText = `${freq.toFixed(1)} Hz (Objetivo)`;
+            centsText.innerText = `--`;
+            needleGroup.style.transform = 'rotate(0deg)';
+            setThemeClass('theme-idle');
+          } else {
+            // Manual Mode: Play reference tone
+            toggleReferenceTone(row, freq);
+          }
+        });
+      });
+    });
+
+    // Set application mode (Auto vs Manual)
+    function setMode(auto) {
+      if (isAutoMode === auto) return;
+      isAutoMode = auto;
+      
+      // Stop reference sounds if switching away from manual
+      stopReferenceTone();
+      
+      // Reset UI states
+      clearStringHighlight();
+      needleGroup.style.transform = 'rotate(0deg)';
+      noteLetter.innerText = '-';
+      noteDetails.innerText = auto ? 'Toca una cuerda' : 'Escoge una cuerda';
+      centsText.innerText = '--';
+      frequencyText.innerText = '0.0 Hz';
+      setThemeClass('theme-idle');
+
+      if (auto) {
+        btnAuto.classList.add('active');
+        btnManual.classList.add('active'); // wait, remove active from manual
+        btnManual.classList.remove('active');
+        subtitleText.innerText = 'Modo Cromático Automático';
+        fretboardTitleText.innerText = 'Cuerdas (Guía visual)';
+        
+        // Show mic permission overlay if not granted yet
+        if (!isListening) {
+          micOverlay.classList.add('show');
+        } else {
+          startPitchDetection();
+        }
+      } else {
+        btnManual.classList.add('active');
+        btnAuto.classList.remove('active');
+        micOverlay.classList.remove('show');
+        subtitleText.innerText = 'Modo Referencia Auditiva';
+        fretboardTitleText.innerText = 'Cuerdas (Presiona para escuchar)';
+        
+        // Stop pitch detection loop
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+      }
+    }
+
+    // Toggle active reference tones
+    function toggleReferenceTone(row, freq) {
+      const line = row.querySelector('.string-line');
+
+      if (currentPlayingString === row) {
+        // Toggle off if clicking the same playing string
+        stopReferenceTone();
+      } else {
+        // Stop previous playing string if any
+        stopReferenceTone();
+
+        // Start playing new string tone
+        playReferenceTone(freq);
+        currentPlayingString = row;
+        row.classList.add('active');
+        line.classList.add('vibrating');
+
+        // Update display panel with target note
+        noteLetter.innerText = row.querySelector('.note-char').innerText.toUpperCase();
+        const strNum = row.getAttribute('data-string');
+        const standardNotesES = ["Mi (Grave)", "Si", "Sol", "Re", "La", "Mi (Agudo)"];
+        const noteIdx = parseInt(strNum) - 1; // 1 to 6
+        // Map: 1st string = Mi (Agudo), 6th = Mi (Grave)
+        const noteIndexMap = [5, 4, 3, 2, 1, 0]; // index mapping for Spanish labels
+        noteDetails.innerText = `Cuerda ${strNum} - ${standardNotesES[noteIndexMap[parseInt(strNum) - 1]]}`;
+        frequencyText.innerText = `${freq.toFixed(1)} Hz`;
+        centsText.innerText = 'Sonando...';
+        setThemeClass('theme-tuned');
+      }
+    }
+
+    // Initialize AudioContext (must run after user interaction)
+    function initAudioContext() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
+
+    // Synthesize reference tones (Manual Mode)
+    function playReferenceTone(frequency) {
+      initAudioContext();
+      
+      activeOscillator = audioContext.createOscillator();
+      activeGainNode = audioContext.createGain();
+      
+      // triangle wave sounds much warmer and string-like than pure sine waves
+      activeOscillator.type = 'triangle';
+      activeOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+      // Low pass filter to warm up the sound and reduce harsh harmonics
+      const oscFilter = audioContext.createBiquadFilter();
+      oscFilter.type = 'lowpass';
+      oscFilter.frequency.setValueAtTime(frequency * 1.8, audioContext.currentTime);
+
+      // Smooth fade-in to avoid popping sounds
+      activeGainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      activeGainNode.gain.linearRampToValueAtTime(0.25, audioContext.currentTime + 0.1);
+
+      activeOscillator.connect(oscFilter);
+      oscFilter.connect(activeGainNode);
+      activeGainNode.connect(audioContext.destination);
+
+      activeOscillator.start();
+    }
+
+    function stopReferenceTone() {
+      if (activeOscillator && activeGainNode) {
+        const osc = activeOscillator;
+        const gain = activeGainNode;
+        const row = currentPlayingString;
+
+        // Smooth fade-out to avoid clicks
+        gain.gain.setValueAtTime(gain.gain.value, audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.08);
+
+        setTimeout(() => {
+          try {
+            osc.stop();
+            osc.disconnect();
+          } catch(e) {}
+          try {
+            gain.disconnect();
+          } catch(e) {}
+        }, 100);
+
+        if (row) {
+          row.classList.remove('active');
+          const line = row.querySelector('.string-line');
+          if (line) line.classList.remove('vibrating');
+        }
+      }
+      activeOscillator = null;
+      activeGainNode = null;
+      currentPlayingString = null;
+    }
+
+    // Request Microphone Access (Auto Mode)
+    async function requestMicrophoneAccess() {
+      initAudioContext();
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          } 
+        });
+        
+        isListening = true;
+        micOverlay.classList.remove('show');
+        
+        setupMicrophoneNodes();
+        startPitchDetection();
+      } catch (err) {
+        console.error("Microphone access denied: ", err);
+        alert("No se pudo acceder al micrófono. Por favor, concede los permisos en tu navegador.");
+      }
+    }
+
+    // Connect Web Audio nodes for pitch tracking
+    function setupMicrophoneNodes() {
+      const source = audioContext.createMediaStreamSource(micStream);
+      
+      // Biquad lowpass filter prevents high-frequency noise & harmonics from confusing the tuner
+      biquadFilterNode = audioContext.createBiquadFilter();
+      biquadFilterNode.type = 'lowpass';
+      biquadFilterNode.frequency.setValueAtTime(800, audioContext.currentTime); // standard guitar fundamentals lie below 400Hz
+
+      analyserNode = audioContext.createAnalyser();
+      analyserNode.fftSize = fftSize;
+
+      source.connect(biquadFilterNode);
+      biquadFilterNode.connect(analyserNode);
+    }
+
+    // Start tuner render loop
+    function startPitchDetection() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      
+      // Start drawing canvas wave
+      drawWaveform();
+      
+      function update() {
+        if (!isAutoMode) return;
+        
+        processPitch();
+        animationFrameId = requestAnimationFrame(update);
+      }
+      
+      animationFrameId = requestAnimationFrame(update);
+    }
+
+    // Core pitch detection processing
+    function processPitch() {
+      if (!analyserNode) return;
+
+      analyserNode.getFloatTimeDomainData(timeBuffer);
+      const sampleRate = audioContext.sampleRate;
+      
+      const pitch = detectPitchAutocorrelation(timeBuffer, sampleRate);
+
+      if (pitch !== -1 && pitch >= 50 && pitch <= 1000) {
+        // A valid pitch is detected
+        clearTimeout(silenceTimeout);
+        silenceTimeout = null;
+
+        // Calculate closest note chromatic variables
+        const noteNum = getNoteFromFrequency(pitch);
+        const targetFreq = getFrequencyFromNoteNumber(noteNum);
+        const cents = getCentsDeviation(pitch, targetFreq);
+
+        // Calculate note names (localized)
+        const noteIndex = noteNum % 12;
+        const octave = Math.floor(noteNum / 12) - 1;
+        const noteNameEN = noteStringsEnglish[noteIndex];
+        const noteNameES = noteStringsSpanish[noteIndex];
+
+        // Smooth out inputs to reduce needle jitter
+        if (noteNum !== lastNoteNumber) {
+          lastNoteNumber = noteNum;
+          smoothedFrequency = pitch;
+          smoothedCents = cents;
+        } else {
+          smoothedFrequency = smoothedFrequency * 0.75 + pitch * 0.25;
+          smoothedCents = smoothedCents * 0.75 + cents * 0.25;
+        }
+
+        // Update Fretboard/String Visual Guidance
+        const guitarStringIndex = guitarStringsNotes[noteNum];
+        if (guitarStringIndex) {
+          highlightString(guitarStringIndex);
+          noteDetails.innerText = `Cuerda ${guitarStringIndex} - ${noteNameES}${octave}`;
+        } else {
+          clearStringHighlight();
+          noteDetails.innerText = `${noteNameES}${octave}`;
+        }
+
+        // Render values to UI
+        noteLetter.innerText = noteNameEN;
+        frequencyText.innerText = `${smoothedFrequency.toFixed(1)} Hz`;
+
+        // Render Cents and update color schemes
+        const roundedCents = Math.round(smoothedCents);
+        const centsSign = roundedCents > 0 ? "+" : "";
+        
+        let theme = "theme-idle";
+        
+        if (Math.abs(roundedCents) <= 3) {
+          centsText.innerText = "¡Afinado!";
+          theme = "theme-tuned";
+        } else {
+          centsText.innerText = `${centsSign}${roundedCents} cents`;
+          
+          if (roundedCents < 0) {
+            theme = roundedCents < -18 ? "theme-flat-severe" : "theme-flat";
+          } else {
+            theme = roundedCents > 18 ? "theme-sharp-severe" : "theme-sharp";
+          }
+        }
+
+        setThemeClass(theme);
+        rotateNeedle(smoothedCents);
+      } else {
+        // Silence or noise (no pitch)
+        if (!silenceTimeout) {
+          silenceTimeout = setTimeout(() => {
+            // Decay needle slowly back to center 0
+            decayTunerToIdle();
+          }, 350); // small delay to prevent rapid flashing in between notes
+        }
+      }
+    }
+
+    // Auto-correlation time-domain pitch detector with parabolic interpolation
+    function detectPitchAutocorrelation(buffer, sampleRate) {
+      const size = buffer.length;
+      
+      // Step 1: Calculate root-mean-square (RMS) amplitude
+      let rms = 0;
+      for (let i = 0; i < size; i++) {
+        rms += buffer[i] * buffer[i];
+      }
+      rms = Math.sqrt(rms / size);
+      
+      // Threshold: Ignore noise/silence
+      if (rms < 0.008) {
+        return -1;
+      }
+
+      // Step 2: Slice the signal to eliminate silence boundary errors
+      let r1 = 0;
+      let r2 = size - 1;
+      const thres = 0.2;
+      for (let i = 0; i < size / 2; i++) {
+        if (Math.abs(buffer[i]) < thres) {
+          r1 = i;
+          break;
+        }
+      }
+      for (let i = size - 1; i >= size / 2; i--) {
+        if (Math.abs(buffer[i]) < thres) {
+          r2 = i;
+          break;
+        }
+      }
+      const signal = buffer.slice(r1, r2);
+      const signalSize = signal.length;
+
+      // Step 3: Compute autocorrelation of the windowed signal
+      const correlations = new Float32Array(signalSize);
+      for (let i = 0; i < signalSize; i++) {
+        for (let j = 0; j < signalSize - i; j++) {
+          correlations[i] += signal[j] * signal[j + i];
+        }
+      }
+
+      // Step 4: Find the first peak after the initial central decay
+      let d = 0;
+      while (d < signalSize - 1 && correlations[d] > correlations[d + 1]) {
+        d++;
+      }
+      
+      // If we decayed all the way to the end, no pitch found
+      if (d >= signalSize - 1) {
+        return -1;
+      }
+
+      let maxval = -1;
+      let maxpos = -1;
+      for (let i = d; i < signalSize; i++) {
+        if (correlations[i] > maxval) {
+          maxval = correlations[i];
+          maxpos = i;
+        }
+      }
+
+      let T0 = maxpos;
+
+      // Step 5: Parabolic Interpolation for sub-sample accuracy
+      if (T0 > 0 && T0 < signalSize - 1) {
+        const x1 = correlations[T0 - 1];
+        const x2 = correlations[T0];
+        const x3 = correlations[T0 + 1];
+        const a = (x1 + x3 - 2 * x2) / 2;
+        const b = (x3 - x1) / 2;
+        if (a !== 0) {
+          T0 = T0 - b / (2 * a);
+        }
+      }
+
+      // Fundamental Frequency
+      return sampleRate / T0;
+    }
+
+    // Convert frequency to chromatic note number (A440 base)
+    function getNoteFromFrequency(frequency) {
+      const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
+      return Math.round(noteNum) + 69;
+    }
+
+    // Convert note number to base frequency
+    function getFrequencyFromNoteNumber(noteNumber) {
+      return 440 * Math.pow(2, (noteNumber - 69) / 12);
+    }
+
+    // Get cents deviation between real frequency and ideal target note frequency
+    function getCentsDeviation(frequency, targetFrequency) {
+      return 1200 * Math.log2(frequency / targetFrequency);
+    }
+
+    // Decay needle and reset texts on silence
+    function decayTunerToIdle() {
+      // Decay smoothed cents slowly
+      smoothedCents = smoothedCents * 0.7;
+      if (Math.abs(smoothedCents) < 0.2) {
+        smoothedCents = 0;
+      }
+      
+      rotateNeedle(smoothedCents);
+      
+      if (smoothedCents === 0) {
+        noteLetter.innerText = '-';
+        noteDetails.innerText = 'Toca una cuerda';
+        centsText.innerText = '--';
+        frequencyText.innerText = '0.0 Hz';
+        setThemeClass('theme-idle');
+        clearStringHighlight();
+      } else {
+        // Still fading
+        rotateNeedle(smoothedCents);
+      }
+    }
+
+    // Rotate the SVG gauge needle
+    function rotateNeedle(cents) {
+      // Map -50..+50 cents to -60..+60 degrees rotation
+      const maxCents = 50;
+      const maxAngle = 60;
+      
+      // Constrain cents between -50 and 50
+      const constrainedCents = Math.max(-maxCents, Math.min(maxCents, cents));
+      const angle = (constrainedCents / maxCents) * maxAngle;
+      
+      needleGroup.style.transform = `rotate(${angle.toFixed(1)}deg)`;
+    }
+
+    // Highlight active string in the list
+    function highlightString(stringIndex) {
+      stringRows.forEach(row => {
+        const idx = parseInt(row.getAttribute('data-string'));
+        const line = row.querySelector('.string-line');
+        if (idx === stringIndex) {
+          row.classList.add('active');
+        } else {
+          row.classList.remove('active');
+          if (line) line.classList.remove('vibrating');
+        }
+      });
+    }
+
+    // Clear all highlighted strings
+    function clearStringHighlight() {
+      stringRows.forEach(row => {
+        row.classList.remove('active');
+        const line = row.querySelector('.string-line');
+        if (line) line.classList.remove('vibrating');
+      });
+    }
+
+    // Helper to dynamically switch accent themes on app wrapper
+    function setThemeClass(themeName) {
+      const themes = ['theme-idle', 'theme-tuned', 'theme-flat', 'theme-flat-severe', 'theme-sharp', 'theme-sharp-severe'];
+      themes.forEach(theme => {
+        if (theme === themeName) {
+          appContainer.classList.add(theme);
+          if (theme !== 'theme-idle') {
+            appContainer.classList.add('glowing');
+          } else {
+            appContainer.classList.remove('glowing');
+          }
+        } else {
+          appContainer.classList.remove(theme);
+        }
+      });
+    }
+
+    // Canvas Waveform rendering loop
+    function drawWaveform() {
+      requestAnimationFrame(drawWaveform);
+
+      const width = waveCanvas.width;
+      const height = waveCanvas.height;
+
+      // Clear the canvas
+      canvasContext.clearRect(0, 0, width, height);
+
+      // If we are not in auto mode, or microphone isn't connected, draw a flat baseline
+      if (!isAutoMode || !analyserNode || !isListening) {
+        canvasContext.beginPath();
+        canvasContext.moveTo(0, height / 2);
+        canvasContext.lineTo(width, height / 2);
+        canvasContext.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+        canvasContext.lineWidth = 2 * (window.devicePixelRatio || 1);
+        canvasContext.stroke();
+        return;
+      }
+
+      // Retrieve time domain samples
+      const drawBuffer = new Float32Array(512); // smaller window looks cleaner on screen
+      analyserNode.getFloatTimeDomainData(drawBuffer);
+
+      canvasContext.beginPath();
+      canvasContext.lineWidth = 2.5 * (window.devicePixelRatio || 1);
+      
+      // Line color follows the current theme variable (retrieved from computed style)
+      const currentAccentColor = getComputedStyle(appContainer).getPropertyValue('--accent-color').trim();
+      canvasContext.strokeStyle = currentAccentColor || '#38bdf8';
+      
+      // Shadow glow on the line matching the theme
+      canvasContext.shadowBlur = 8 * (window.devicePixelRatio || 1);
+      canvasContext.shadowColor = currentAccentColor || '#38bdf8';
+
+      const sliceWidth = width / drawBuffer.length;
+      let x = 0;
+
+      for (let i = 0; i < drawBuffer.length; i++) {
+        // Amplify wave height for display
+        const amplitude = drawBuffer[i] * 1.6; 
+        const y = (amplitude + 1) * (height / 2);
+
+        if (i === 0) {
+          canvasContext.moveTo(x, y);
+        } else {
+          canvasContext.lineTo(x, y);
+        }
+        x += sliceWidth;
+      }
+
+      canvasContext.lineTo(width, height / 2);
+      canvasContext.stroke();
+      
+      // Reset shadow for performance
+      canvasContext.shadowBlur = 0;
+    }
+  </script>
+</body>
+</html>

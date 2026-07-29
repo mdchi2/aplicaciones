@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BA Running | Calendario de Maratones</title>
+    <meta name="description" content="Calendario actualizado de las principales maratones y carreras en la Ciudad de Buenos Aires para el año 2026.">
+    
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0a0a0b;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --secondary: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --glass-blur: blur(12px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background Elements */
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .glow-circle {
+            position: absolute;
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.5;
+            animation: move 20s infinite alternate ease-in-out;
+        }
+
+        .glow-circle:nth-child(1) { top: -10%; left: -10%; background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%); }
+        .glow-circle:nth-child(2) { bottom: -10%; right: -10%; background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%); animation-delay: -5s; }
+
+        @keyframes move {
+            from { transform: translate(0, 0); }
+            to { transform: translate(100px, 100px); }
+        }
+
+        header {
+            padding: 6rem 2rem 3rem;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Grid Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            backdrop-filter: var(--glass-blur);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        /* Search & Actions Bar */
+        .search-bar-container {
+            display: flex;
+            gap: 1rem;
+            max-width: 900px;
+            margin: 0 auto 1.5rem;
+            width: 100%;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-input-wrapper::before {
+            content: '🔍';
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.95rem;
+            opacity: 0.5;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 30px;
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            backdrop-filter: var(--glass-blur);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--primary), #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 0.8rem 1.8rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            white-space: nowrap;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+            filter: brightness(1.1);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Filters Bar */
+        .filters-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 0.6rem 1.5rem;
+            border-radius: 30px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: var(--glass-blur);
+        }
+
+        .filter-btn:hover {
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .race-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .race-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.2rem 2rem;
+            backdrop-filter: var(--glass-blur);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        .race-card.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .race-card:hover {
+            transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .race-info-main {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        .date-section {
+            min-width: 140px;
+        }
+
+        .date-badge {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            white-space: nowrap;
+        }
+
+        .name-section {
+            flex: 1;
+        }
+
+        .race-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .race-details {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .distance-tag {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--secondary);
+            padding: 0.15rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        /* Card Actions: Buttons & Icons */
+        .card-actions-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Card Actions: Buttons & Icons */
+        .card-actions-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .cta-btn {
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .cta-btn:hover {
+            filter: brightness(1.2);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--card-border);
+            margin-top: 4rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header { padding: 4rem 1.5rem 2rem; }
+            .container { padding: 1.5rem; }
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
+            .search-bar-container {
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+            .race-card {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1.2rem;
+                padding: 1.2rem;
+            }
+            .race-info-main {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.8rem;
+            }
+            .race-details {
+                flex-wrap: wrap;
+                gap: 0.8rem;
+            }
+            .card-actions-wrapper {
+                flex-direction: row;
+                justify-content: flex-end;
+                width: 100%;
+                margin-top: 0.5rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                padding-top: 0.8rem;
+            }
+            .cta-btn {
+                width: 100%;
+                padding: 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow">
+        <div class="glow-circle"></div>
+        <div class="glow-circle"></div>
+    </div>
+
+    <header>
+        <h1>BA Running</h1>
+        <p class="subtitle">El calendario más completo de maratones y carreras en Buenos Aires.</p>
+    </header>
+
+    <main class="container">
+        <!-- Stats Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-value" id="statCount">0</span>
+                <span class="stat-label">Carreras</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="statDistance">0K</span>
+                <span class="stat-label">Distancia Máx</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="statTypes">0</span>
+                <span class="stat-label">Categorías</span>
+            </div>
+        </div>
+
+        <div class="race-grid" id="raceGrid">
+            <!-- Races will be injected here via JS -->
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 BA Running. Todos los derechos reservados.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.6;">Las fechas pueden estar sujetas a cambios por parte de los organizadores.</p>
+    </footer>
+
+    <script>
+        const defaultRaces = [
+            { id: 1, date: '17 de Mayo', name: '21K Tres Ciudades', distance: '21K', location: 'La Plata / Berisso', link: 'https://carrerascentro.ar/', type: 'Road' },
+            { id: 2, date: '17 de Mayo', name: 'NB 25K Buenos Aires', distance: '25K', location: 'Palermo, CABA', link: 'https://sportsfacilities.com.ar/', type: 'Road' },
+            { id: 3, date: '30 de Mayo', name: 'Maratón de Montaña M42', distance: '42K Trail', location: 'Villa Ventana, BA', link: 'https://fcproducciones.com.ar/', type: 'Trail' },
+            { id: 4, date: '14 de Junio', name: '21K La Plata', distance: '21K / 10K', location: 'La Plata, Prov. BA', link: 'https://carrerascentro.ar/', type: 'Road' },
+            { id: 5, date: '21 de Junio', name: '21K Olímpicos', distance: '21K / 10K', location: 'Costanera Sur, CABA', link: 'https://carrerascentro.ar/', type: 'Road' },
+            { id: 6, date: '05 de Julio', name: 'Bachicha Trail', distance: '37K Trail', location: 'Balcarce, Prov. BA', link: 'https://carrerascentro.ar/', type: 'Trail' },
+            { id: 7, date: '02 de Agosto', name: 'NB 15K Buenos Aires', distance: '15K', location: 'Palermo, CABA', link: 'https://sportsfacilities.com.ar/', type: 'Road' },
+            { id: 8, date: '23 de Agosto', name: 'Media Maratón de Buenos Aires', distance: '21K', location: 'Figueroa Alcorta, CABA', link: 'https://www.maratondebuenosaires.com/', type: 'Road' },
+            { id: 9, date: '06 de Septiembre', name: 'NB Trail Tandil', distance: '21K Trail', location: 'Tandil, Prov. BA', link: 'https://sportsfacilities.com.ar/', type: 'Trail' },
+            { id: 10, date: '20 de Septiembre', name: 'Maratón de Buenos Aires', distance: '42K', location: 'CABA', link: 'https://www.maratondebuenosaires.com/', type: 'Road' },
+            { id: 11, date: '11 de Octubre', name: 'Tierras del Diablo', distance: '50K Trail', location: 'Balcarce, Prov. BA', link: 'https://carrerascentro.ar/', type: 'Trail' },
+            { id: 12, date: '25 de Octubre', name: 'M10K McDonald\'s', distance: '10K', location: 'Puerto Madero, CABA', link: 'https://www.m5k.com.ar/', type: 'Road' },
+            { id: 13, date: '01 de Noviembre', name: 'Ventania Trail', distance: '21K Trail', location: 'Villa Ventana, BA', link: 'https://carrerascentro.ar/', type: 'Trail' },
+            { id: 14, date: '15 de Noviembre', name: 'San Martín Corre por Zaira', distance: '8K / 4K', location: 'Campus Miguelete (UNSAM), San Martín', link: 'https://unsam.edu.ar/', type: 'Road' },
+            { id: 15, date: 'Noviembre', name: 'Ironman 70.3 MDP', distance: '21K (Run)', location: 'Mar del Plata, BA', link: 'https://www.ironman.com/im703-mar-del-plata', type: 'Triathlon' }
+        ];
+
+        let prevStats = { count: 0, distance: 0, types: 0 };
+
+        // Helper to parse Spanish dates to check if they are before today
+        function parseSpanishDate(dateStr) {
+            const months = {
+                'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5,
+                'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
+            };
+            
+            const str = dateStr.toLowerCase().trim();
+            const parts = str.split(' de ');
+            
+            let day = 1;
+            let month = 0;
+            let year = 2026;
+            
+            if (parts.length === 2) {
+                day = parseInt(parts[0]);
+                month = months[parts[1]] !== undefined ? months[parts[1]] : 0;
+            } else if (months[str] !== undefined) {
+                day = 1;
+                month = months[str];
+            }
+            
+            return new Date(year, month, day);
+        }
+
+        // Set today's date dynamically based on local time
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Filter out past races from the source list dynamically on page load
+        const races = defaultRaces.filter(race => {
+            const raceDate = parseSpanishDate(race.date);
+            return raceDate >= today;
+        });
+
+        // Stats calculators
+        function getMaxDistance(racesList) {
+            let max = 0;
+            racesList.forEach(race => {
+                const match = race.distance.match(/(\d+)/);
+                if (match) {
+                    const val = parseInt(match[1]);
+                    if (val > max) max = val;
+                }
+            });
+            return max;
+        }
+
+        // Count unique categories present in the active filtered races
+        function countUniqueTypes(racesList) {
+            const types = new Set(racesList.map(r => r.type));
+            return types.size;
+        }
+
+        function animateValue(id, start, end, duration, suffix = '') {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            if (start === end) {
+                obj.textContent = `${end}${suffix}`;
+                return;
+            }
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.max(Math.abs(Math.floor(duration / (range || 1))), 15);
+            const timer = setInterval(function() {
+                current += increment;
+                obj.textContent = `${current}${suffix}`;
+                if (current === end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        function updateStats(filteredRaces) {
+            const targetCount = filteredRaces.length;
+            const targetDistance = getMaxDistance(filteredRaces);
+            const targetTypes = countUniqueTypes(filteredRaces);
+
+            animateValue('statCount', prevStats.count, targetCount, 300);
+            animateValue('statDistance', prevStats.distance, targetDistance, 300, 'K');
+            animateValue('statTypes', prevStats.types, targetTypes, 300);
+
+            prevStats = { count: targetCount, distance: targetDistance, types: targetTypes };
+        }
+
+        // Card rendering engine
+        const raceGrid = document.getElementById('raceGrid');
+
+        function renderRaces() {
+            updateStats(races);
+
+            if (races.length === 0) {
+                raceGrid.innerHTML = `
+                    <div style="text-align: center; padding: 4rem; color: var(--text-muted); font-size: 1.1rem; backdrop-filter: var(--glass-blur); border: 1px solid var(--card-border); border-radius: 16px; background: var(--card-bg);">
+                        No se encontraron carreras programadas.
+                    </div>
+                `;
+                return;
+            }
+
+            raceGrid.innerHTML = races.map((race) => {
+                return `
+                <article class="race-card" id="race-card-${race.id}">
+                     <div class="race-info-main">
+                         <div class="date-section">
+                             <span class="date-badge">${race.date}</span>
+                         </div>
+                         <div class="name-section">
+                             <h2 class="race-name">${race.name}</h2>
+                             <div class="race-details">
+                                 <span class="distance-tag">${race.distance}</span>
+                                 <div class="info-item">📍 ${race.location}</div>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="card-actions-wrapper">
+                         <!-- CTA Web Link -->
+                         <a href="${race.link}" target="_blank" class="cta-btn">${race.link.includes('maraton') ? 'Info' : 'Más Información'}</a>
+                     </div>
+                </article>
+                `;
+            }).join('');
+
+            // Apply fade-in animation to card list
+            setTimeout(() => {
+                document.querySelectorAll('.race-card').forEach((card, idx) => {
+                    setTimeout(() => card.classList.add('visible'), idx * 30);
+                });
+            }, 50);
+        }
+
+        // Initial render
+        renderRaces();
+    </script>
+</body>
+</html>
